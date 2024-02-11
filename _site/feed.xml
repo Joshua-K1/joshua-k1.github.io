@@ -5,9 +5,528 @@
         <description></description>
         <link>http://localhost:4000/</link>
         <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sat, 10 Feb 2024 23:28:47 +0000</pubDate>
-        <lastBuildDate>Sat, 10 Feb 2024 23:28:47 +0000</lastBuildDate>
+        <pubDate>Sun, 11 Feb 2024 21:23:24 +0000</pubDate>
+        <lastBuildDate>Sun, 11 Feb 2024 21:23:24 +0000</lastBuildDate>
         <generator>Jekyll v4.3.1</generator>
+        
+            <item>
+                <title>Retrieving SSL Certificate Information With Python</title>
+                <description>&lt;p&gt;If you’re building or supporting a live service, SSL certificates and and their management will no doubt be something you find yourself involved with at some stage. Whilst in the modern cloud landscape there is a vast array of tooling for monitoring and managing the life cycle of SSL certificates. There may come a time when a slightly more primitive solution is the one that works best.&lt;/p&gt;
+
+&lt;p&gt;This post provides some detail on how to monitor SSL certificates using a small but helpful Python program.&lt;/p&gt;
+
+&lt;p&gt;We’ll look at creating the script itself, or if you would prefer to just retrieve a copy you can do so via GitHub &lt;span style=&quot;color:blue&quot;&gt;&lt;a href=&quot;https://github.com/Joshua-K1/py-ssl-check&quot;&gt;here.&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;!--more--&gt;
+
+&lt;h2 id=&quot;check-if-python-is-installed&quot;&gt;Check if Python is installed&lt;/h2&gt;
+&lt;p&gt;First, we need to check that the machine we are using has Python installed. This post will focus on the use of Python3 so each of the commands will include the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;python3&lt;/code&gt; notation.&lt;/p&gt;
+
+&lt;h3 id=&quot;mac&quot;&gt;Mac&lt;/h3&gt;
+&lt;p&gt;Open a shell prompt, such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Terminal&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;item2&lt;/code&gt; and run the below command.&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;python3&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;--&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;version&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;If the system has Python installed, the output will look as below.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Python 3.x.x
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;If nothing, or an error message stating Python cannot be found is returned. Then you need to install it.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Install Via the Python Website&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Visit the &lt;a href=&quot;https://www.python.org/downloads/macos/&quot;&gt;Python Website&lt;/a&gt; and download the latest or required stable release. Once downloaded, locate and run the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.pkg&lt;/code&gt; file. Once ran, follow the installer instructions until completed.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Install via Homebrew&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Homebrew is a package manager for MacOS and Linux. Similar to APT and YUM, Homebrew provides a straightforward package management experience. For instructions on how to install Homebrew, visit their website &lt;span style=&quot;color:blue&quot;&gt;&lt;a href=&quot;https://brew.sh/&quot;&gt;here.&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;To install Python via Homebrew, run the below command:&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;brew&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;python3&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Once installed, you can again verify the installation by running the below command in shell prompt:&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;python3&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;--&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;version&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;creating-the-script&quot;&gt;Creating the script&lt;/h2&gt;
+&lt;p&gt;Navigate to a directory of your chooisng and create a file called ssl-check.py.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cd ~/repositories
+touch ssl-check.py
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Once created, open the file in your preffered text editor and at the very top of the file add the below statements to import the libraries required by the script.&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;ssl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;socket&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Allows&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;us&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;make&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;SSL&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;connections&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;an&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;endpoint&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;datetime&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Allows&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;us&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;manipulate&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;objects&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;dateutil&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;parser&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Allows&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;us&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;parse&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;objects&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;into&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;strings&lt;/span&gt; 
+&lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;prettytable&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;PrettyTable&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Allows&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;us&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;generate&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;formatted&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;tables&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Next, we define 3 separate arrays.&lt;/p&gt;
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;domains&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;google.com, youtube.com&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Stores&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;domains&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;we&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;will&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;test&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;alt_domains&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Stores&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;certificate&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;SAN&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;names&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;crts&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Stores&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;objects&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;In the above code, the domains array has been populated with the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;google.com&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;youtube.com&lt;/code&gt; domains. Replace these with the domains which you need to test. These can be anything that has a HTPS service housing a certificate and anything that is resolvable by DNS.&lt;/p&gt;
+
+&lt;p&gt;Next we define a Certificate class. For each domain tested, we will generate an object of the Certificate class which will store the pieces of information we retrieve.&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Certificate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;nx&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__init__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;san&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;expire&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;days_left&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;common_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;san&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;san&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;expire&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;expire&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;days_left&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;days_left&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;common_name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;common_name&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Next, we define our main function which houses a loop to iterate through the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;domains&lt;/code&gt; arrray and retrieve the certificate information of each domain held in the array.&lt;/p&gt;
+
+&lt;div class=&quot;language-javascript highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+    &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;each&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;domains&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;domain&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;domains&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+
+        &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;define&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;SSL&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;session&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;context&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;helper&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;provided&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;by&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;ssl&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;library&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;secure&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;ssl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;create_default_context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;an&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;SSL&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;sockect&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;associate&lt;/span&gt;
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;it&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ctx &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;kd&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;ctx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;wrap_socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;server_hostname&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;domain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;soc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;open&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;connection&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;on&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;port&lt;/span&gt; 
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;443&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;domain&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;held&lt;/span&gt; 
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;current&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;loop&lt;/span&gt; 
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;iteration&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;soc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;connect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;domain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;443&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;uses&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;socket&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;helper&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;getpeercert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;retrieve&lt;/span&gt; 
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;SSL&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;certificate&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;cert&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;soc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;getpeercert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+            &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;dictionary&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;unpack&lt;/span&gt;
+            &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;values&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;returned&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;certificate_domains&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;dict&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;cert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;subject&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;hold&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Common&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Name&lt;/span&gt; 
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;returned&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;issued_to&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;certificate_domains&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;commonName&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;an&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;array&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;hold&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;SAN&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;domains&lt;/span&gt;
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;there&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;are&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;number&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;SANs&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;per&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;cert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;these&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;are&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;returned&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;an&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;array&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;dict&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;certificate_alt_domain&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;cert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;subjectAltName&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;an&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;empty&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;array&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;store&lt;/span&gt;
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;alt&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;domain&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;it&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;retrieved&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;alt_domain&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;certificate_alt_domain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+                &lt;span class=&quot;nx&quot;&gt;alt_domain_lower&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;alt_domain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+                &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;append&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;alt_domain_lower&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;# &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;retrieve&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;expiration&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;and&lt;/span&gt; 
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;parse&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;into&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;legible&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;format&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;res&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;parser&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;parse&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;cert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;notAfter&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;fuzzy&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;retrieve&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;current&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;date&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;current_date&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;date&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;today&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+            
+            &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;minus&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;currne&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; 
+            &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;expiration&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;date&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;store&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; 
+            &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;days&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;left&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;days_left&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;res&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;date&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;current_date&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;days&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;an&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;object &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Certificate&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; 
+			&lt;span class=&quot;err&quot;&gt;# &lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;values&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;retrieved&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Certificate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;domain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;res&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;date&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;days_left&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;issued_to&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+			&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;append&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crts&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;array&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;crts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;append&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+	&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;loop&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;through&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;each&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;
+	&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crts&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;array&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+
+        &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;table&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;PrettyTable&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;libray&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; 
+        &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Common&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Expiration&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Days&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Left&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;headers&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;t&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;PrettyTable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Common Name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Expiration&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;Days Left&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;add&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;values&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;of&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;table&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;row&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;add_row&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;common_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;expire&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;days_left&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;store&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;array&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;returned&lt;/span&gt;
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;san&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;crt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;san&lt;/span&gt;
+
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;create&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;table&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;the&lt;/span&gt; 
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;heading&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;SANs&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;t_s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;PrettyTable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;SANs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&apos;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+        
+        &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;each&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;array&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;add&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;row&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;to&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;table&lt;/span&gt; 
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;d&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;t_s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;add_row&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;table&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;t&lt;/span&gt;
+        &lt;span class=&quot;nf&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+		&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;table&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;t_s&lt;/span&gt;
+        &lt;span class=&quot;nf&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;t_s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;__name__&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;__main__&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Once the above has been added, the script is completed and can be ran with the below command:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;python3 ssl-check.py
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If you see an error such as the below, the libraries required by the script are missing.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Traceback (most recent call last):
+  File &quot;/home/leenux/repos/py-ssl-check/py_ssl.py&quot;, line 3, in &amp;lt;module&amp;gt;
+    from dateutil import parser
+ModuleNotFoundError: No module named &apos;dateutil&apos;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To import the required libraries, create a new file called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;requirements.txt&lt;/code&gt; within the same directoy and within it add the below lines:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;prettytable==3.8.0
+python-dateutil==2.8.2
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Once added, run the below command:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;pip install -r requirements.txt
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This file is also available within the repository &lt;span style=&quot;color:blue&quot;&gt;&lt;a href=&quot;https://github.com/Joshua-K1/py-ssl-check/blob/main/py_ssl.py&quot;&gt;here&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;Now, when running the script the output should look as below:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;+------------+--------------+------------+-----------+
+|    Name    | Common Name  | Expiration | Days Left |
++------------+--------------+------------+-----------+
+| google.com | *.google.com | 2023-10-09 |     54    |
++------------+--------------+------------+-----------+
++--------------------------------------+
+|                 SANs                 |
++--------------------------------------+
+|             *.google.com             |
+|        *.appengine.google.com        |
+|              *.bdn.dev               |
+|        *.origin-test.bdn.dev         |
+|          *.cloud.google.com          |
+|       *.crowdsource.google.com       |
+|       *.datacompute.google.com       |
+|             *.google.ca              |
+|             *.google.cl              |
+|            *.google.co.in            |
+|            *.google.co.jp            |
+				
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</description>
+                <pubDate>Thu, 01 Feb 2024 00:00:00 +0000</pubDate>
+                <link>http://localhost:4000/retrieving-ssl-certificate-info</link>
+                <guid isPermaLink="true">http://localhost:4000/retrieving-ssl-certificate-info</guid>
+                
+                <category>Scripting</category>
+                
+                <category>Python</category>
+                
+                <category>SSL</category>
+                
+                
+            </item>
+        
+            <item>
+                <title>Maching Learning In Production Infrastructure</title>
+                <description>&lt;p&gt;In the previous post, we looked at the components of Machine Learning Ops at a high level and briefly touched on each stage of the life cycle. With this in mind, we can now look at the finer processes of a machine learning infrastructure solution and begin to explore the tooling and technologies used in their curation.&lt;/p&gt;
+
+&lt;p&gt;Looking at the image below, you’ll notice that the machine learning code is only a small portion of the overall solution. The bulk of tooling within machine learning infrastructure exists to support the capture, integration and monitoring of data ingested and produced by the model. The quality and accuracy of model produced data is largely dependant on the quality of data ingested as well as the measures which have been put in place to either enrich or verify the data. The smallest of changes in a data set can compound over time and ultimately lead to quite a sizeable, negative impact to model performance. Most of us will be familiar with the term GIGO ( Garbage In Garbage Out ) and this remains an important concept to keep in consideration when building machine learning  solutions.&lt;/p&gt;
+
+&lt;!--more--&gt;
+
+&lt;figure class=&quot;image-card width-wide caption&quot;&gt;
+  &lt;img src=&quot;/images/machineLearningInfra.jpeg&quot; alt=&quot;Machine Learning Infra&quot; /&gt;
+  
+&lt;/figure&gt;
+
+&lt;p&gt;The sections below will provide some insight into each of the main objectives of the infrastructure components that a machine learning solution is comprised of.&lt;/p&gt;
+
+&lt;h3 id=&quot;data-collection&quot;&gt;Data Collection&lt;/h3&gt;
+&lt;p&gt;The data collection step focuses on the collection of data from a number of chosen data sources. Depending on what you are training your model to do, data sources can be text based forums for language learning, social media sites or generic websites for images, or youtube videos to collect audio or video samples. The amount of data and the frequency at which it is collected is all dependant on a number of factors and is something that is often finely tuned as the solution evolves.&lt;/p&gt;
+
+&lt;p&gt;There are a number of ways which data for machine learning can be collected and collection methodologies will differ depending on what works best.  A few example sources are:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Open Source Datasets&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt;&lt;a href=&quot;https://www.kaggle.com/&quot;&gt;Kaggle&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt;&lt;a href=&quot;https://archive.ics.uci.edu/&quot;&gt;UCI Machine Learning Repository&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Web Scraping&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Price extraction from e-commerce sites.&lt;/li&gt;
+  &lt;li&gt;Scraping of plain text from text based forums or websites.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Manual Data Collection&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Raw data from physical or virtualised sensors.&lt;/li&gt;
+  &lt;li&gt;Survery or forum responses.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;data-verification&quot;&gt;Data Verification&lt;/h3&gt;
+
+&lt;p&gt;Once data collection has been completed, it is then important to verify the data to ensure it is both accurate and up to date before it is consumed by the remaining components. We can imagine the data verification step as a gate at which all data must satisfy a set of requirements before being allowed to continue on its journey. As an example, we may want to remove duplicate entries from a data set to avoid inflating the weight of a particular value which could lead to its significance being misrepresented and ultimately contribute to model inaccuracy.&lt;/p&gt;
+
+&lt;p&gt;We may also wish to ensure that the data conforms to a specific schema prior to it’s continuation.  For example if we have parameters that are expecting a specific number format, we should ensure that all numerical values provided by this feature are of the same format and within an expected range.&lt;/p&gt;
+
+&lt;h3 id=&quot;feature-selection&quot;&gt;Feature Selection&lt;/h3&gt;
+
+&lt;p&gt;Feature selection aims to finely tune collected data and reduce noise by removing variables which are adding little to zero value to the performance of the model. Whilst it’s often beneficial to have a large volume of data for training models, it’s important to identify which parts of this data are contributing to model performance and which are not. Having large, complex data sets consisting of a lot of noise will only slow down the model training process and result in a slower model overall.&lt;/p&gt;
+
+&lt;p&gt;For example, imagine we are training a model to predict the sale price of houses in a given year and we are presented with a dataset that consists of the below features.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Sale Price&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Overall Condition&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Year Built&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Total Sq Foot&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Property Slope&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;150,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1975&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.1&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;140,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.8&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1988&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1800&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.2&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;200,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.9&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2400&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.1&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;480,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2010&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;3500&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.5&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;85,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.6&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1991&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1100&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.2&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;155,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.5&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2001&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1500&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.3&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;170,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.8&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2001&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1600&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.6&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;230,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.7&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1996&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1900&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.1&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Looking at the above, we may determine that the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Property Slope&lt;/code&gt; feature may not be as impactful to model performance due to a lack of enough variance to make an impactful change. Therefore, we should remove this from consideration leaving the data set to be used for training as below:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Sale Price&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Overall Condition&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Year Built&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Total Sq Foot&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;150,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1975&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2000&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;140,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.8&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1988&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1800&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;200,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.9&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2400&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;480,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2010&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;3500&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;85,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.6&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1991&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1100&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;155,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.5&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2001&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1500&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;170,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.8&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2001&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1600&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;230,000&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;0.7&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1996&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;1900&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h3 id=&quot;pipelining-and-configuration&quot;&gt;Pipelining and Configuration&lt;/h3&gt;
+
+&lt;p&gt;The pipelining step of a machine learning solution is not greatly indifferent from that of more common infrastructure solutions. The aim is to integrate the various infrastructure components that houses the model and supporting technologies and where possible, ensure the repeatable aspects of the workflow have been automated. Like any CI/CD, we need to understand what our data sources are, where they are housed and understand how this data will traverse the various components.&lt;/p&gt;
+
+&lt;p&gt;In addition to data, the pipeline will be responsible for the deployment of serving infrastructure as well as the management and delivery of the model code itself.&lt;/p&gt;
+
+&lt;h3 id=&quot;source-code&quot;&gt;Source Code&lt;/h3&gt;
+
+&lt;p&gt;Depending on their purpose, machine learning projects will most likely involve multiple source code repositories, each consisting of a different language depending on the nature of the overall solution. However, for the purpose of this post and simplicity, we’ll consider that the source code consists of code bases that are responsible for the preparation of data and the development of the model.&lt;/p&gt;
+
+&lt;p&gt;There are a number languages used to train models and their selection is largely dependant on preference as well as a few other factors. However, some of the common languages accompanied by a few of the most commonly used learning and data libraries within each are:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Python&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://www.tensorflow.org/&quot;&gt;TensorFlow&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://pytorch.org/&quot;&gt;PyTorch&lt;/a&gt; &lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://scikit-learn.org/stable/&quot;&gt;Sci-Kit Learn&lt;/a&gt; &lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;R&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://www.projectpro.io/data-science-in-r-programming-tutorial/introduction-to-dplyr-package&quot;&gt;Dplyr&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://tidyr.tidyverse.org/&quot;&gt;tidyr&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://topepo.github.io/caret/&quot;&gt;CARET&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;JavaScript&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://www.tensorflow.org/js&quot;&gt;TensorFlow.js&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;C++&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://caffe.berkeleyvision.org/&quot;&gt;Caffe&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;span style=&quot;color:blue&quot;&gt; &lt;a href=&quot;https://dynet.readthedocs.io/en/latest/&quot;&gt;DyNet&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;resource-management&quot;&gt;Resource Management&lt;/h3&gt;
+
+&lt;p&gt;With resource management, we can again draw on a number of similarities from the management of resources in more common platform solutions. At the core, we’re looking to strike a balance between minimising the costs and maximising the value produced by the solution. However, machine learning requires a considerably greater amount of computational power over common cloud computing applications. This is because for machine learning models to be efficient, they require the ability to process multiple computations simultaneously. Whilst it is possible to train and deliver models using only CPU equipped instances, if you’re dealing with deep learning applications or neural networks it is incredibly beneficial to employ instances equipped with either GPUs or TPUs due to their large number of cores and matrix multiplication optimisation.&lt;/p&gt;
+
+&lt;figure class=&quot;image-card width-wide caption&quot;&gt;
+  &lt;img src=&quot;/images/cpu_v_gpu.png&quot; alt=&quot;CPU v GPU&quot; /&gt;
+  
+&lt;/figure&gt;
+
+&lt;p&gt;GPU or TPU equipped instances can get incredibly expensive and their justification must be weighed against a few other factors. For example, how quickly do we need to be able to ingest and enrich new data, train our model and then deliver the newly produced model to a production environment? If this needs to be a short period of time, then we will most likely need a GPU or TPU equipped instance to speed up this delivery time. If this is not the case and we can afford a longer amount of time between the delivery of new models, then it may be more cost effective to only utilise hardware equipped with less powerful hardware and accept the longer training time. Additionally, costs for services providing functionality such as storage can be greatly inflated when delivering a machine learning solution. The greater the size of the model and the data set it requires, the greater the cost of storage.&lt;/p&gt;
+
+&lt;h3 id=&quot;monitoring&quot;&gt;Monitoring&lt;/h3&gt;
+
+&lt;p&gt;Aside from the usual performance metrics, monitoring machine learning infrastructure in production environments should place a large focus on testing the integrity and performance of the model itself. There are a number of ways this can be done and we’ll cover these in depth in a further post but for now, some of the most common methods are as below:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Model Call Monitoring&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;If we treat our model in a similar fashion to that of a public endpoint. We monitor the  amount of calls which have been made to the model and the percentage of these calls which have returned a response successfully. If the number of calls being made to the model drops to 0, or begins to display anomalies when compared to normal usage patterns, we can deduct there is an issue.&lt;/p&gt;
+
+&lt;figure class=&quot;image-card width-wide caption&quot;&gt;
+  &lt;img src=&quot;/images/model_calls.png&quot; alt=&quot;Model Calls&quot; /&gt;
+  
+&lt;/figure&gt;
+
+&lt;p&gt;We can also employ metrics such as response time. How long is the model taking to return a response? If this begins to exceed predetermined or acceptable thresholds then again we can assume something is not functioning as intended.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Feature Change and Schema Monitoring&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Within a machine learning solution, it’s important that we’re able to maintain the integrity of the data at each step of the process to allow us to identify any potential issues. One method to do this is to monitor the data schema itself for any intended or accidental changes. The aim here is to be alerted to any drop, addition or change of the current data set features. We’ll also be able to then compare the accuracy metrics of the model against the various points at which the schema / feature set has changed and determine the impact the change had on the accuracy of the model.&lt;/p&gt;
+
+&lt;p&gt;Additionally, monitoring the values of the features is important to ensure the contained data is both correct and usable. For example, if we are expecting numerical values from a specific feature but upon querying character based values are returned instead, we should have monitoring in place to identify this discrepancy.&lt;/p&gt;
+
+&lt;p&gt;It may also be the case that the feature values are of the intended type but the values themselves are falling outside of the expected range. For example, a specific feature may be expected to return a numerical value between the range of 5 and 10 but when queried, numbers outside of this range are being returned. We should again be able to represent this graphically and have alerting in place to identify this.&lt;/p&gt;
+
+&lt;figure class=&quot;image-card width-wide caption&quot;&gt;
+  &lt;img src=&quot;/images/value_range.png&quot; alt=&quot;Value Range&quot; /&gt;
+  
+&lt;/figure&gt;
+
+&lt;p&gt;&lt;strong&gt;Missing Data&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;As with unintended data types and incorrect values, we need to have the capability to identify missing values in data streams that are being ingested by the model. This being said, monitoring for missing values and any abnormality within the data set should be done with a certain level of fault tolerance. The level of tolerance applied should of course be determined by the level of impact which abnormal values will have on the performance of the model.&lt;/p&gt;
+
+&lt;p&gt;Whilst the above focused on the base metrics that we can expect when monitoring a machine learning solution, there are a number of additional caveats which it is best to prepare for, two examples are &lt;span style=&quot;color:blue&quot;&gt;&lt;a href=&quot;https://www.evidentlyai.com/blog/machine-learning-monitoring-data-and-concept-drift&quot;&gt;Model Decay and Data Drift&lt;/a&gt;&lt;/span&gt; which we’ll cover in depth in a further post.&lt;/p&gt;
+
+</description>
+                <pubDate>Thu, 01 Feb 2024 00:00:00 +0000</pubDate>
+                <link>http://localhost:4000/machine-learning-in-production-infrastructure</link>
+                <guid isPermaLink="true">http://localhost:4000/machine-learning-in-production-infrastructure</guid>
+                
+                <category>MachineLearning</category>
+                
+                <category>MLOps</category>
+                
+                
+            </item>
         
             <item>
                 <title>An Introduction To Machine Learning Ops</title>
