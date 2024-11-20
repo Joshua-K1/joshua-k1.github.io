@@ -1,6 +1,16 @@
+---
+layout: post
+title: "Winter is coming"
+description: "Winter is coming"
+date: 2024-02-01
+tags: [Winter, AI, AGI]
+---
+
 {% include image_full.html imageurl="/images/winter-is-coming.png" title="Winter" %}
 
 Anyone familiar with AI research, or at least those that have done some reading on the history in the throws of hype will be familiar with AI "summers" and ["winters"](https://en.wikipedia.org/wiki/AI_winter). These are terms that describe the historic, cyclical periods of alternating enthusiasm and technology breakthroughs, followed by disillusionment and reduced interest in the field of AI research and development. 
+
+<!--more-->
 
 As you might have guessed, it's currently summer, and keeping in line with climate change, it's been the hottest on record. With the recent hype, innovation and constant pivoting to align business operations with AI solutions, it feels like we're a ways off feeling the sharp nip of winter again. But if history has taught us anything, its that if it has happened before, it can most certainly happen again if the conditions are right. 
 
