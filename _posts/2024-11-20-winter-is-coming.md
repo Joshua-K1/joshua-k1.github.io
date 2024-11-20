@@ -6,7 +6,7 @@ date: 2024-02-01
 tags: [Winter, AI, AGI]
 ---
 
-{% include image_full.html imageurl="/images/winter-is-coming.png" title="Winter" %}
+{% include image_caption.html imageurl="/images/winter-is-coming.png" title="Winter is Coming" caption="" %}
 
 Anyone familiar with AI research, or at least those that have done some reading on the history in the throws of hype will be familiar with AI "summers" and ["winters"](https://en.wikipedia.org/wiki/AI_winter). These are terms that describe the historic, cyclical periods of alternating enthusiasm and technology breakthroughs, followed by disillusionment and reduced interest in the field of AI research and development. 
 
