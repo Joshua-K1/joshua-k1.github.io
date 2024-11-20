@@ -2,7 +2,7 @@
 layout: post
 title: "Winter is coming"
 description: "Winter is coming"
-date: 2024-02-01
+date: 2024-11-20
 tags: [Winter, AI, AGI]
 ---
 
